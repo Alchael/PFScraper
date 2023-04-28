@@ -18,4 +18,6 @@
 # No need to worry about power outtages as the program appends to the file per line so it is continually saved.
 # You really only need to worry about supplying the correct key.txt values
 #
+# Video of it in action https://youtu.be/I5IUWs9Jlgo
+#
 # Copyright (c) Michael Henry Pescador 2023 All Rights Reserved
