@@ -1,4 +1,4 @@
-# PFScraper -- Version 1.0
+# PFScraper -- Version 1.0.1
 # Web Scraper and Automation tool for Practice Fusion
 # Author: Michael Henry Pescador
 # Language: Python (version 3.11)
