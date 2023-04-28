@@ -1,4 +1,4 @@
-# only 2 external libraries are used, selenium and bs4
+# PFSCRAPER 1.0.1
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -8,7 +8,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from bs4 import BeautifulSoup as Soup
 from datetime import datetime
 import csv, time, sys
-
 
 # SETTINGS AND VARIABLES -------------------------------------------------------
 # INFO: I MOVED THE USERNAME AND PASSWORD TO THE key.txt file, please edit it !!
@@ -79,10 +78,9 @@ if firstRun:
 wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,'li.charts-updated')))
 f = open('output.csv', 'a', encoding='utf-8', newline='')
 w = csv.writer(f)
-w.writerow('')
-w.writerow(('Started', getstamp()))
-header = ['Count','Name', 'Date of Birth', 'Record Number', 'Status', 'Mobile Number', 'Home Number', 'Work Number', 'Email' ,'Email Reminder', 'Text Reminder', 'Voice Reminder', 'Documentation of Consent', 'Address 1', 'Address 2', 'State/ZIP', 'Payer Name', 'Plan Name', 'Order of Benefits', 'Insurance ID']
-w.writerow(header)
+header = ['Count','Name', 'Date of Birth', 'Record Number', 'Status', 'Mobile Number', 'Home Number', 'Work Number', 'Email' , 'Email Reminder', 'Text Reminder', 'Voice Reminder', 'Documentation of Consent', \
+    'Address 1', 'Address 2', 'State/ZIP', 'Primary Payer', 'Primary Plan', 'Primary Order of Benefits', 'Primary Insurance ID', 'Secondary Payer', 'Secondary Plan', 'Secondary Order of Benefits', 'Secondary Insurance ID']
+w.writerows(([],['Started',getstamp()],header))
 f.flush()
 records = []
 # -------- SEARCH LOOP BODY ----------------------------------------------------
@@ -139,7 +137,7 @@ for c, currentPatient in enumerate(patients):
     time.sleep(timeoutSearch)
     # -------- RECORD BODY -----------------------------------------------------
     soup = parse(d)
-    name, dob, recordNumber, status, mobileNumber, homeNumber, workNumber, email, emailReminder, textReminder, voiceReminder, consent, address1, address2, state, payer, plan, order, insuranceID = (None,) * 19
+    name, dob, recordNumber, status, mobileNumber, homeNumber, workNumber, email, emailReminder, textReminder, voiceReminder, consent, address1, address2, state, payer1, plan1, order1, insuranceID1, payer2, plan2, order2, insuranceID2 = (None,) * 23
     try:
         print('GRABBING DATA...')
         # I know full XPATH is ugly to look at but this is definitely the only reliable way to pinpoint these elements on this particularly tricky site
@@ -164,14 +162,36 @@ for c, currentPatient in enumerate(patients):
     # -------- INSURANCE BODY --------------------------------------------------
     d.find_element(By.XPATH, '/html/body/div[2]/div[2]/div[4]/div/div[2]/div[2]/div/div[1]/div[2]/div[1]/div[3]/div/div[6]/div/div[2]/div/div/div/ul/li[1]').click()    # Insurance 1
     time.sleep(timeoutShort)
+    def getPayer(d):
+        return d.find_element(By.XPATH, '/html/body/div[2]/div[2]/div[4]/div/div[2]/div[2]/div/div[2]/div[1]/div[2]/div[3]/div[2]/div[1]/div/input').get_attribute('value')
+    def getPlan(d):
+        return d.find_element(By.XPATH, '/html/body/div[2]/div[2]/div[4]/div/div[2]/div[2]/div/div[2]/div[1]/div[2]/div[3]/div[2]/div[2]/div[1]/input').get_attribute('value')
+    def getOrder(d):
+        return d.find_element(By.XPATH, '/html/body/div[2]/div[2]/div[4]/div/div[2]/div[2]/div/div[2]/div[1]/div[2]/div[3]/div[3]/div[1]/div[1]/div/div/button/span').text
+    def getInsuranceID(d):
+        return d.find_element(By.XPATH, '/html/body/div[2]/div[2]/div[4]/div/div[2]/div[2]/div/div[2]/div[1]/div[2]/div[3]/div[3]/input[1]').get_attribute('value')
     try:
-        payer = d.find_element(By.XPATH, '/html/body/div[2]/div[2]/div[4]/div/div[2]/div[2]/div/div[2]/div[1]/div[2]/div[3]/div[2]/div[1]/div/input').get_attribute('value')
-        plan = d.find_element(By.XPATH, '/html/body/div[2]/div[2]/div[4]/div/div[2]/div[2]/div/div[2]/div[1]/div[2]/div[3]/div[2]/div[2]/div[1]/input').get_attribute('value')
-        order = d.find_element(By.XPATH, '/html/body/div[2]/div[2]/div[4]/div/div[2]/div[2]/div/div[2]/div[1]/div[2]/div[3]/div[3]/div[1]/div[1]/div/div/button/span').text
-        insuranceID = d.find_element(By.XPATH, '/html/body/div[2]/div[2]/div[4]/div/div[2]/div[2]/div/div[2]/div[1]/div[2]/div[3]/div[3]/input[1]').get_attribute('value')
+        payer1 = getPayer(d)
+        plan1 = getPlan(d)
+        order1 = getOrder(d)
+        insuranceID1 = getInsuranceID(d)
     except:
-        print('ERROR IN GRABBING INSURANCE INFO!!!')
-    record = (c+1,name, dob, recordNumber, status, mobileNumber, homeNumber, workNumber, email, emailReminder, textReminder, voiceReminder, consent, address1, address2, state, payer, plan, order, insuranceID)
+        print('ERROR IN GRABBING PRIMARY INSURANCE INFO!!!')
+    time.sleep(timeoutShort)
+    try:
+        secondaryInsurance = d.find_element(By.XPATH, '/html/body/div[2]/div[2]/div[4]/div/div[2]/div[2]/div/div[1]/div[2]/div[1]/div[3]/div/div[6]/div/div[2]/div/div/div/ul/li[2]')
+        if secondaryInsurance:
+            secondaryInsurance.click()
+        try:
+            payer2 = getPayer(d)
+            plan2 = getPlan(d)
+            order2 = getOrder(d)
+            insuranceID2 = getInsuranceID(d)
+        except:
+            print('ERROR IN GRABBING SECONDARY INSURANCE INFO!!!')
+    except:
+        pass
+    record = (c+1,name, dob, recordNumber, status, mobileNumber, homeNumber, workNumber, email, emailReminder, textReminder, voiceReminder, consent, address1, address2, state, payer1, plan1, order1, insuranceID1, payer2, plan2, order2, insuranceID2)
     print(record)
     records.append(record)
     w.writerow(record)          # moved writing to file here so we have output in case of crash or interruption
@@ -183,3 +203,4 @@ duration = time.perf_counter() - startTime
 w.writerow(('Completed',getstamp(),'Time Taken', str(int(duration))+' seconds'))
 print(f'MISSION ACCOMPLISHED in {duration} seconds!\nSuccessfully processed {len(records)} patient records! ...Exiting app in 5 seconds')
 time.sleep(5)
+# COPYRIGHT © 2023 Michael Henry Pescador All Rights Reserved
