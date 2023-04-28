@@ -20,5 +20,4 @@
 
 ## Video of it in action https://youtu.be/I5IUWs9Jlgo
 
-## Copyright (c) Michael Henry Pescador 2023
-## All Rights Reserved
+## Copyright (c) Michael Henry Pescador 2023 All Rights Reserved
